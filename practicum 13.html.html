@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neuralnetics — Cortical Protocol &amp; Calibration Scheduler</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #050811;
+      color: #f8fafc;
+      line-height: 1.5;
+    }
+
+    header {
+      background: linear-gradient(90deg, #090d1e 0%, #0f172a 100%);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+      color: #ffffff;
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, #38bdf8, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-pill {
+      font-size: 0.85rem;
+      font-weight: 600;
+      background-color: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+
+    .card {
+      background-color: #0b1120;
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Task Creation Form */
+    .task-form {
+      display: grid;
+      grid-template-columns: 1fr 165px 155px auto;
+      gap: 0.65rem;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      padding: 0.65rem 0.8rem;
+      border: 1.5px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      background-color: #050811;
+      color: #f8fafc;
+      color-scheme: dark;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.1rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.12s ease;
+    }
+
+    .btn:hover {
+      opacity: 0.92;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #0284c7, #7e22ce);
+      color: #ffffff;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-edit {
+      background-color: rgba(56, 189, 248, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+
+    .btn-save {
+      background-color: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #6ee7b7;
+    }
+
+    .btn-delete {
+      background-color: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background-color: #050811;
+      color: #94a3b8;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      border-color: #38bdf8;
+      color: #e2e8f0;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(90deg, #0284c7, #7e22ce);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    /* Task List */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 10px;
+      background-color: #070b16;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .task-item:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .task-item.completed {
+      background-color: #050811;
+      opacity: 0.65;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #38bdf8;
+      flex-shrink: 0;
+    }
+
+    .task-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-weight: 600;
+      font-size: 0.98rem;
+      color: #f8fafc;
+      word-break: break-word;
+    }
+
+    .task-item.completed .task-title {
+      text-decoration: line-through;
+      color: #64748b;
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .badge {
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-high {
+      background-color: rgba(244, 63, 94, 0.18);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fda4af;
+    }
+
+    .badge-medium {
+      background-color: rgba(168, 85, 247, 0.18);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #d8b4fe;
+    }
+
+    .badge-low {
+      background-color: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+
+    .edit-input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.92rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 680px) {
+      .task-form {
+        grid-template-columns: 1fr;
+      }
+
+      .task-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .task-actions {
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Neuralnetics: Cortical Protocol Scheduler</h1>
+    <span class="stats-pill" id="statsPill">0 Synchronized / 0 Total</span>
+  </header>
+
+  <main class="container">
+    <!-- Protocol Addition Form -->
+    <section class="card" aria-label="Schedule Cortical Protocol">
+      <form class="task-form" id="taskForm">
+        <input
+          type="text"
+          id="taskInput"
+          placeholder="Enter neural calibration directive..."
+          aria-label="Protocol description"
+          required
+          maxlength="100"
+        />
+        <select id="prioritySelect" aria-label="Synaptic priority">
+          <option value="high">Critical Synaptic</option>
+          <option value="medium" selected>Standard Cortical</option>
+          <option value="low">Background Telemetry</option>
+        </select>
+        <input type="date" id="dueDateInput" aria-label="Target cycle date" />
+        <button type="submit" class="btn btn-primary">+ Queue Protocol</button>
+      </form>
+    </section>
+
+    <!-- Protocol Workflow Board -->
+    <section class="card" aria-label="Cortical Protocol Queue">
+      <div class="filter-bar">
+        <div class="filter-tabs" id="filterTabs">
+          <button type="button" class="tab-btn active" data-filter="all">All Nodes</button>
+          <button type="button" class="tab-btn" data-filter="pending">Active Queue</button>
+          <button type="button" class="tab-btn" data-filter="completed">Synchronized</button>
+          <button type="button" class="tab-btn" data-filter="high">Critical Synaptic</button>
+        </div>
+        <button type="button" class="btn btn-sm btn-delete" id="clearCompletedBtn">
+          Purge Synchronized
+        </button>
+      </div>
+
+      <ul class="task-list" id="taskList"></ul>
+    </section>
+  </main>
+
+  <script>
+    // State & localStorage Persistence Key
+    const STORAGE_KEY = "neuralnetics_protocols_v1";
+
+    const taskForm = document.getElementById("taskForm");
+    const taskInput = document.getElementById("taskInput");
+    const prioritySelect = document.getElementById("prioritySelect");
+    const dueDateInput = document.getElementById("dueDateInput");
+    const taskList = document.getElementById("taskList");
+    const filterTabs = document.getElementById("filterTabs");
+    const clearCompletedBtn = document.getElementById("clearCompletedBtn");
+    const statsPill = document.getElementById("statsPill");
+
+    const PRIORITY_LABELS = {
+      high: "Critical Synaptic",
+      medium: "Standard Cortical",
+      low: "Background Telemetry"
+    };
+
+    let tasks = loadTasks();
+    let currentFilter = "all";
+    let editingId = null;
+
+    function loadTasks() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (err) {
+        console.warn("Neural storage unavailable:", err);
+      }
+      // Default starter Neuralnetics protocols
+      return [
+        { id: 1, title: "Initialize V4 visual cortex micro-electrode array", priority: "high", dueDate: "", completed: true },
+        { id: 2, title: "Calibrate bi-directional haptic feedback latency (< 0.5ms)", priority: "medium", dueDate: "", completed: false },
+        { id: 3, title: "Verify encrypted synaptic state persistence across power cycles", priority: "low", dueDate: "", completed: false }
+      ];
+    }
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch (err) {
+        console.warn("Failed to persist neural protocols:", err);
+      }
+    }
+
+    function updateStats() {
+      const completedCount = tasks.filter((t) => t.completed).length;
+      statsPill.textContent = `${completedCount} Synchronized / ${tasks.length} Total`;
+    }
+
+    function getFilteredTasks() {
+      if (currentFilter === "pending") return tasks.filter((t) => !t.completed);
+      if (currentFilter === "completed") return tasks.filter((t) => t.completed);
+      if (currentFilter === "high") return tasks.filter((t) => t.priority === "high");
+      return tasks;
+    }
+
+    // Render Protocol List Safely
+    function renderTasks() {
+      updateStats();
+      taskList.innerHTML = "";
+      const visibleTasks = getFilteredTasks();
+
+      if (visibleTasks.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "empty-state";
+        empty.textContent = "No cortical protocols match the active filter.";
+        taskList.appendChild(empty);
+        return;
+      }
+
+      visibleTasks.forEach((task) => {
+        const li = document.createElement("li");
+        li.className = `task-item ${task.completed ? "completed" : ""}`;
+
+        const left = document.createElement("div");
+        left.className = "task-left";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "task-checkbox";
+        checkbox.checked = task.completed;
+        checkbox.setAttribute("aria-label", `Mark "${task.title}" as synchronized`);
+        checkbox.addEventListener("change", () => toggleComplete(task.id));
+
+        const info = document.createElement("div");
+        info.className = "task-info";
+
+        // Inline Protocol Editing Mode
+        if (editingId === task.id) {
+          const editInput = document.createElement("input");
+          editInput.type = "text";
+          editInput.className = "edit-input";
+          editInput.value = task.title;
+          editInput.maxLength = 100;
+          editInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") saveEdit(task.id, editInput.value);
+            if (e.key === "Escape") {
+              editingId = null;
+              renderTasks();
+            }
+          });
+          info.appendChild(editInput);
+          setTimeout(() => editInput.focus(), 0);
+        } else {
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "task-title";
+          titleSpan.textContent = task.title;
+
+          const meta = document.createElement("div");
+          meta.className = "task-meta";
+
+          const badge = document.createElement("span");
+          badge.className = `badge badge-${task.priority}`;
+          badge.textContent = PRIORITY_LABELS[task.priority] || task.priority;
+          meta.appendChild(badge);
+
+          if (task.dueDate) {
+            const dateSpan = document.createElement("span");
+            dateSpan.textContent = `Target Cycle: ${task.dueDate}`;
+            meta.appendChild(dateSpan);
+          }
+
+          info.append(titleSpan, meta);
+        }
+
+        left.append(checkbox, info);
+
+        const actions = document.createElement("div");
+        actions.className = "task-actions";
+
+        if (editingId === task.id) {
+          const saveBtn = document.createElement("button");
+          saveBtn.type = "button";
+          saveBtn.className = "btn btn-sm btn-save";
+          saveBtn.textContent = "Commit";
+          saveBtn.addEventListener("click", () => {
+            const input = li.querySelector(".edit-input");
+            saveEdit(task.id, input.value);
+          });
+          actions.appendChild(saveBtn);
+        } else {
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn btn-sm btn-edit";
+          editBtn.textContent = "Recalibrate";
+          editBtn.addEventListener("click", () => {
+            editingId = task.id;
+            renderTasks();
+          });
+          actions.appendChild(editBtn);
+        }
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn-sm btn-delete";
+        delBtn.textContent = "Sever";
+        delBtn.addEventListener("click", () => deleteTask(task.id));
+        actions.appendChild(delBtn);
+
+        li.append(left, actions);
+        taskList.appendChild(li);
+      });
+    }
+
+    // Add Protocol
+    taskForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = taskInput.value.trim();
+      if (!title) return;
+
+      tasks.unshift({
+        id: Date.now(),
+        title,
+        priority: prioritySelect.value,
+        dueDate: dueDateInput.value,
+        completed: false
+      });
+
+      saveTasks();
+      taskForm.reset();
+      prioritySelect.value = "medium";
+      renderTasks();
+    });
+
+    function toggleComplete(id) {
+      tasks = tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+      saveTasks();
+      renderTasks();
+    }
+
+    function saveEdit(id, newTitle) {
+      const trimmed = newTitle.trim();
+      if (trimmed) {
+        tasks = tasks.map((t) => (t.id === id ? { ...t, title: trimmed } : t));
+        saveTasks();
+      }
+      editingId = null;
+      renderTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter((t) => t.id !== id);
+      if (editingId === id) editingId = null;
+      saveTasks();
+      renderTasks();
+    }
+
+    filterTabs.addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab-btn");
+      if (!btn) return;
+      filterTabs.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      renderTasks();
+    });
+
+    clearCompletedBtn.addEventListener("click", () => {
+      tasks = tasks.filter((t) => !t.completed);
+      saveTasks();
+      renderTasks();
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
